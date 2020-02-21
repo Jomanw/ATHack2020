@@ -58,7 +58,7 @@ class MainApp(QWidget):
         self.frame = p.process_contrast_frame(frame)
 
         image = QImage(self.frame, self.frame.shape[1], self.frame.shape[0],
-                       # frame.strides[0], QImage.Format_RGB888)
+                       # self.frame.strides[0], self.QImage.Format_RGB888)
                        self.frame.strides[0], QImage.Format_Grayscale8)
         pixmap = QPixmap.fromImage(image).scaledToWidth(self.video_size.width())
         self.image_label.setGeometry(self.initial_x, self.initial_y, self.initial_x + self.video_size.width(), self.initial_y + self.video_size.height())
