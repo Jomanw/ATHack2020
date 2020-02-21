@@ -17,6 +17,8 @@ class MainApp(QWidget):
     def setup_ui(self):
         """Initialize widgets.
         """
+        # self.setStyleSheet('background-color: rgb(50, 50, 50);')
+
         self.image_label = QLabel()
         self.image_label.setFixedSize(self.video_size)
 
@@ -45,6 +47,7 @@ class MainApp(QWidget):
         """
         _, frame = self.capture.read()
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         frame = cv2.flip(frame, 1)
 
         # Can do whatever we want to the image here
@@ -54,7 +57,7 @@ class MainApp(QWidget):
             invGamma = 1.0 / gamma
             table = np.array(np.array([((i / 255.0) ** invGamma) * 255 for i in np.arange(0, 256)]).astype("uint8"))
             return cv2.LUT(image, table)
-
+            
         frame = adjust_gamma(frame, 5.0)
         image = QImage(frame, frame.shape[1], frame.shape[0],
                        frame.strides[0], QImage.Format_RGB888)
