@@ -14,6 +14,8 @@ class MainApp(QWidget):
     def __init__(self):
         QWidget.__init__(self)
         # self.video_size = QSize(320, 240)
+        self.initial_x = 100
+        self.initial_y = 100
         self.video_size = QSize(640, 480)
         self.setup_ui()
         self.setup_camera()
@@ -24,7 +26,8 @@ class MainApp(QWidget):
         # self.setStyleSheet('background-color: rgb(50, 50, 50);')
 
         self.image_label = QLabel()
-        self.image_label.setFixedSize(self.video_size)
+        self.image_label.setGeometry(self.initial_x, self.initial_y, self.initial_x + self.video_size.width(), self.initial_y + self.video_size.height())
+        self.image_label.setMinimumSize(640,480)
 
         self.quit_button = QPushButton("Quit")
         self.quit_button.clicked.connect(self.close)
@@ -54,10 +57,16 @@ class MainApp(QWidget):
         # self.frame = p.process_threshold_frame(frame)
         self.frame = p.process_contrast_frame(frame)
 
-        image = QImage(self.frame, self.frame.shape[1], self.frame.shape[0],
-                       # self.frame.strides[0], QImage.Format_RGB888)
-                       self.frame.strides[0], QImage.Format_Grayscale8)
-        self.image_label.setPixmap(QPixmap.fromImage(image))
+        image = QImage(frame, frame.shape[1], frame.shape[0],
+                       frame.strides[0], QImage.Format_RGB888)
+        pixmap = QPixmap.fromImage(image).scaledToWidth(self.video_size.width())
+        self.image_label.setGeometry(self.initial_x, self.initial_y, self.initial_x + self.video_size.width(), self.initial_y + self.video_size.height())
+        self.image_label.setPixmap(pixmap)
+
+    def resizeEvent(self, event):
+        # Resize the video_size based on the current window size
+        # Don't set the size here directly, though
+        self.video_size = QSize(self.frameGeometry().width() - 40, self.frameGeometry().height() - 96)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
