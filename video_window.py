@@ -10,6 +10,8 @@ class MainApp(QWidget):
     def __init__(self):
         QWidget.__init__(self)
         # self.video_size = QSize(320, 240)
+        self.initial_x = 100
+        self.initial_y = 100
         self.video_size = QSize(640, 480)
         self.setup_ui()
         self.setup_camera()
@@ -18,7 +20,8 @@ class MainApp(QWidget):
         """Initialize widgets.
         """
         self.image_label = QLabel()
-        self.image_label.setFixedSize(self.video_size)
+        self.image_label.setGeometry(self.initial_x, self.initial_y, self.initial_x + self.video_size.width(), self.initial_y + self.video_size.height())
+        self.image_label.setMinimumSize(1,1)
 
         self.quit_button = QPushButton("Quit")
         self.quit_button.clicked.connect(self.close)
@@ -49,8 +52,8 @@ class MainApp(QWidget):
 
         # Can do whatever we want to the image here
 
+        # Function to adjust the gamma of an image
         def adjust_gamma(image, gamma=1.0):
-            print(image)
             invGamma = 1.0 / gamma
             table = np.array(np.array([((i / 255.0) ** invGamma) * 255 for i in np.arange(0, 256)]).astype("uint8"))
             return cv2.LUT(image, table)
@@ -58,7 +61,15 @@ class MainApp(QWidget):
         frame = adjust_gamma(frame, 5.0)
         image = QImage(frame, frame.shape[1], frame.shape[0],
                        frame.strides[0], QImage.Format_RGB888)
-        self.image_label.setPixmap(QPixmap.fromImage(image))
+        pixmap = QPixmap.fromImage(image).scaledToWidth(self.video_size.width())
+        self.image_label.setGeometry(self.initial_x, self.initial_y, self.initial_x + self.video_size.width(), self.initial_y + self.video_size.height())
+
+        self.image_label.setPixmap(pixmap)
+
+    def resizeEvent(self, event):
+        # Resize the video_size based on the current window size
+        # Don't set the size here directly, though
+        self.video_size = QSize(self.frameGeometry().width() - 40, self.frameGeometry().height() - 96)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
