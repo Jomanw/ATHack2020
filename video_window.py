@@ -1,9 +1,13 @@
+import sys
+
+from PySide2.QtGui import *
 from PySide2.QtCore import *
 from PySide2.QtWidgets import QWidget, QApplication, QLabel, QPushButton, QVBoxLayout
-from PySide2.QtGui import *
+
 import cv2
 import numpy as np
-import sys
+
+import processing as p
 
 class MainApp(QWidget):
 
@@ -46,21 +50,13 @@ class MainApp(QWidget):
         """Read frame from camera and repaint QLabel widget.
         """
         _, frame = self.capture.read()
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        frame = cv2.flip(frame, 1)
+        # self.frame = p.no_process_frame(frame)
+        # self.frame = p.process_threshold_frame(frame)
+        self.frame = p.process_contrast_frame(frame)
 
-        # Can do whatever we want to the image here
-
-        def adjust_gamma(image, gamma=1.0):
-            print(image)
-            invGamma = 1.0 / gamma
-            table = np.array(np.array([((i / 255.0) ** invGamma) * 255 for i in np.arange(0, 256)]).astype("uint8"))
-            return cv2.LUT(image, table)
-            
-        frame = adjust_gamma(frame, 5.0)
-        image = QImage(frame, frame.shape[1], frame.shape[0],
-                       frame.strides[0], QImage.Format_RGB888)
+        image = QImage(self.frame, self.frame.shape[1], self.frame.shape[0],
+                       # self.frame.strides[0], QImage.Format_RGB888)
+                       self.frame.strides[0], QImage.Format_Grayscale8)
         self.image_label.setPixmap(QPixmap.fromImage(image))
 
 if __name__ == "__main__":
