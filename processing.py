@@ -29,10 +29,11 @@ def process_filter_frame(image):
     image = cv2.filter2D(image, -1, kernel)
     return image
 
-def process_contrast_frame(image):
-    alpha = 1.0 # Contrast control (1.0-3.0)
-    beta = 0 # Brightness control (0-100)
+def process_contrast_frame(image, alpha, beta):
+    # alpha = 1.0 # Contrast control (1.0-3.0)
+    # beta = 0 # Brightness control (0-100)
     adjusted = cv2.convertScaleAbs(image, alpha=alpha, beta=beta)
     adjusted = cv2.cvtColor(adjusted, cv2.COLOR_BGR2GRAY)
+    # adjusted = cv2.equalizeHist(adjusted)
 
     return adjusted

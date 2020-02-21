@@ -29,6 +29,8 @@ class MainApp(QWidget):
         self.image_label.setGeometry(self.initial_x, self.initial_y, self.initial_x + self.video_size.width(), self.initial_y + self.video_size.height())
         self.image_label.setMinimumSize(640,480)
 
+        self.img = cv2.imread('test_imgs/4.jpg')
+
         self.quit_button = QPushButton("Quit")
         self.quit_button.clicked.connect(self.close)
 
@@ -45,9 +47,26 @@ class MainApp(QWidget):
         self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, self.video_size.width())
         self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, self.video_size.height())
 
+        self.contrast = 1.0
+        self.beta = 0
+
         self.timer = QTimer()
-        self.timer.timeout.connect(self.display_video_stream)
+        # self.timer.timeout.connect(self.display_video_stream)
         self.timer.start(30)
+        self.timer.timeout.connect(self.display_image_stream)
+        self.timer.start(1000)
+
+    def display_image_stream(self):
+        self.contrast = (self.contrast + 0.1) % 3.0
+        # self.beta = (self.beta + 10) % 100
+        self.frame = p.process_contrast_frame(self.img, self.contrast, self.beta)
+
+        image = QImage(self.frame, self.frame.shape[1], self.frame.shape[0],
+                       # self.frame.strides[0], self.QImage.Format_RGB888)
+                       self.frame.strides[0], QImage.Format_Grayscale8)
+        pixmap = QPixmap.fromImage(image).scaledToWidth(self.video_size.width())
+        self.image_label.setGeometry(self.initial_x, self.initial_y, self.initial_x + self.video_size.width(), self.initial_y + self.video_size.height())
+        self.image_label.setPixmap(pixmap)
 
     def display_video_stream(self):
         """Read frame from camera and repaint QLabel widget.
@@ -74,3 +93,9 @@ if __name__ == "__main__":
     win = MainApp()
     win.show()
     sys.exit(app.exec_())
+
+
+
+
+
+
