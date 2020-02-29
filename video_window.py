@@ -2,14 +2,16 @@ import sys
 
 from PySide2.QtGui import *
 from PySide2.QtCore import *
-from PySide2.QtWidgets import QWidget, QApplication, QLabel, QPushButton, QVBoxLayout, QSlider, QScrollArea
+
+from PySide2.QtWidgets import QWidget, QApplication, QLabel, QPushButton, QVBoxLayout, QSlider, QScrollArea, QFileDialog
 from PySide2 import QtWidgets, QtCore, QtGui
 import cv2
 import numpy as np
 
 import ui
 import processing as p
-from image_contrast import PIL_contrast
+from PIL import Image
+
 class PhotoViewer(QtWidgets.QGraphicsView):
     photoClicked = QtCore.Signal(QtCore.QPoint)
 
@@ -95,12 +97,14 @@ class MainApp(QWidget):
 
     def __init__(self):
         QWidget.__init__(self)
-        # self.video_size = QSize(320, 240)
         self.initial_x = 100
         self.initial_y = 100
         self.video_size = QSize(640, 480)
+        # self.video_size = QSize(1024.0, 768.0)
+        # self.video_size = QSize(1280, 1024)
 
         self.scale = 1.0
+        self.pause = False
 
         self.setup_ui()
         self.setup_camera()
@@ -113,6 +117,8 @@ class MainApp(QWidget):
         self.image_label = QLabel()
         self.image_label.setGeometry(self.initial_x, self.initial_y, self.initial_x + self.video_size.width(), self.initial_y + self.video_size.height())
         self.image_label.setMinimumSize(640,480)
+        # self.image_label.setMinimumSize(1024,768)
+        # self.image_label.setMinimumSize(1280, 1024)
 
         self.scrolling_image_label = QScrollArea()
         self.scrolling_image_label.setBackgroundRole(QPalette.Dark)
@@ -121,37 +127,36 @@ class MainApp(QWidget):
         self.img = cv2.imread('test_imgs/4.jpg')
 
         # initialize quit button
-        self.quit_button = QPushButton("Quit")
-        self.quit_button.setMinimumSize(10, 30)
-        self.quit_button.clicked.connect(self.close)
+        # self.quit_button = ui.LegibleButton("Quit")
+        # self.quit_button.setMinimumSize(10, 30)
+        # self.quit_button.clicked.connect(self.close)
+
+        # # initialize capture button
+        # self.capture_button = ui.LegibleButton("Capture")
+        # self.capture_button.setMinimumSize(10, 30)
+        # self.capture_button.clicked.connect(self.capture_photo)
+
+        _, _, self.quit_and_save_layout = ui.create_quit_and_save(self.capture_photo, self.close)
 
         self.photo = PhotoViewer(self)
         self.photo.setMinimumSize(640,480)
-        # self.photo.setPhoto(QtGui.QPixmap('test_imgs/2.jpg'))
-        # self.photo._empty = False
-        # self.photo.setGeometry(self.initial_x, self.initial_y, self.initial_x + self.video_size.width(), self.initial_y + self.video_size.height())
-
-        # initialize sharpen button
-        # self.sharpen_button = QPushButton("Sharpen")
-        # self.sharpen_button.clicked.PIL_sharpen()
 
         self.contrast_slider, self.contrast_layout = ui.create_slider('contrast', 33, 99, self.change_contrast)
         self.brightness_slider, self.brightness_layout = ui.create_slider('brightness', 1, 100, self.change_brightness)
+        self.trace_slider, self.trace_layout = ui.create_slider('trace', 20, 300, self.change_trace_threshold)
 
-        self.sharpen_button, self.enhance_button, self.toggle_layout = ui.create_toggle(self.change_sharpen, self.change_enhance)
-
-        self.hover_button = ui.HoverButton('HOVER')
-        self.hover_button.setMinimumSize(10, 30)
+        self.sharpen_button, self.enhance_button, self.trace_button, self.pause_button, self.toggle_layout = ui.create_toggle(self.change_sharpen, self.change_enhance, self.change_trace, self.pause_stream)
 
         self.main_layout = QVBoxLayout()
-        self.main_layout.addWidget(self.hover_button)
         # self.main_layout.addWidget(self.scrolling_image_label)
         self.main_layout.addWidget(self.photo)
-        # self.main_layout.addWidget(self.hover_button)
         # self.main_layout.addWidget(self.image_label)
-        self.main_layout.addWidget(self.quit_button)
+        # self.main_layout.addWidget(self.quit_button)
+        # self.main_layout.addWidget(self.capture_button)
+        self.main_layout.addLayout(self.quit_and_save_layout)
         self.main_layout.addLayout(self.contrast_layout)
         self.main_layout.addLayout(self.brightness_layout)
+        self.main_layout.addLayout(self.trace_layout)
         self.main_layout.addLayout(self.toggle_layout)
 
         self.setLayout(self.main_layout)
@@ -165,8 +170,10 @@ class MainApp(QWidget):
 
         self.contrast = 1.0
         self.brightness = 1.0
+        self.trace_threshold = 20.0
         self.sharpen = False
         self.enhance = False
+        self.trace = False
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.display_video_stream)
@@ -176,7 +183,7 @@ class MainApp(QWidget):
 
     def display_image_stream(self):
         # self.beta = (self.beta + 10) % 100
-        self.frame = p.process_contrast_frame(self.img, self.contrast, self.brightness, enhance=self.enhance)
+        self.frame = p.process_contrast_frame(self.img, self.contrast, self.brightness, enhance=self.enhance, sharpen=self.sharpen, trace=self.trace)
 
         image = QImage(self.frame, self.frame.shape[1], self.frame.shape[0],
                        # self.frame.strides[0], self.QImage.Format_RGB888)
@@ -189,9 +196,11 @@ class MainApp(QWidget):
     def display_video_stream(self):
         """Read frame from camera and repaint QLabel widget.
         """
-        _, frame = self.capture.read()
-        self.frame = p.process_contrast_frame(frame, self.contrast, self.brightness, enhance=self.enhance)
-
+        if self.pause == False:
+            _, self.raw_img = self.capture.read()
+        
+        self.frame = p.process_contrast_frame(self.raw_img, self.contrast, self.brightness, self.trace_threshold, enhance=self.enhance, sharpen=self.sharpen, trace=self.trace)
+        
         image = QImage(self.frame, self.frame.shape[1], self.frame.shape[0],
                        # self.frame.strides[0], self.QImage.Format_RGB888)
                        self.frame.strides[0], QImage.Format_Grayscale8)
@@ -207,6 +216,14 @@ class MainApp(QWidget):
         # Don't set the size here directly, though
         self.video_size = QSize(self.frameGeometry().width() - 40, self.frameGeometry().height() - 96)
 
+    def capture_photo(self):
+        im = Image.fromarray(self.frame)
+        fname = QFileDialog.getSaveFileName(self, 'Save File As', "Captures/untitled.png", "Images (*.png *.jpg)")
+        im.save(fname[0])
+
+    def pause_stream(self):
+        self.pause = not self.pause
+
     def change_contrast(self):
         self.contrast = self.contrast_slider.value()
         self.contrast = self.contrast / 33.0 # keep range in 1.0-3.0
@@ -214,11 +231,18 @@ class MainApp(QWidget):
     def change_brightness(self):
         self.brightness = self.brightness_slider.value()
 
+    def change_trace_threshold(self):
+        self.trace_threshold = self.trace_slider.value()
+
     def change_sharpen(self):
         self.sharpen = not self.sharpen
 
     def change_enhance(self):
         self.enhance = not self.enhance
+
+    def change_trace(self):
+        self.trace = not self.trace
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

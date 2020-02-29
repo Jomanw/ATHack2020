@@ -29,12 +29,21 @@ def process_filter_frame(image):
     image = cv2.filter2D(image, -1, kernel)
     return image
 
-def process_contrast_frame(image, alpha, beta, enhance=False):
+def process_contrast_frame(image, alpha, beta, trace_threshold, enhance=False, sharpen=False, trace=False):
     # alpha = 1.0 # Contrast control (1.0-3.0)
     # beta = 0 # Brightness control (0-100)
     adjusted = cv2.convertScaleAbs(image, alpha=alpha, beta=beta)
     adjusted = cv2.cvtColor(adjusted, cv2.COLOR_BGR2GRAY)
     if enhance:
         adjusted = cv2.equalizeHist(adjusted)
-
+    if sharpen:
+        kernel = np.array([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]])
+        adjusted = cv2.filter2D(adjusted, -1, kernel)
+    if trace:
+        # scale_percent = 200
+        # width = int(adjusted.shape[1] * scale_percent / 100)
+        # height = int(adjusted.shape[0] * scale_percent / 100)
+        # dim = (width, height)
+        # adjusted = cv2.resize(adjusted, dim, interpolation = cv2.INTER_AREA)
+        (thresh, adjusted) = cv2.threshold(adjusted, trace_threshold, 255, cv2.THRESH_BINARY)
     return adjusted
