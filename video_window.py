@@ -57,13 +57,20 @@ class PhotoViewer(QtWidgets.QGraphicsView):
             self._photo.setPixmap(QtGui.QPixmap())
         self.fitInView()
 
+    def setPhotoContinuous(self, pixmap):
+        self._empty = False
+        self.setDragMode(QtWidgets.QGraphicsView.ScrollHandDrag)
+        self._photo.setPixmap(pixmap)
+
     def wheelEvent(self, event):
         if self.hasPhoto():
             if event.angleDelta().y() > 0:
-                factor = 1.25
+                # factor = 1.25
+                factor = 1.125
                 self._zoom += 1
             else:
-                factor = 0.8
+                # factor = 0.8
+                factor = 0.9
                 self._zoom -= 1
             if self._zoom > 0:
                 self.scale(factor, factor)
@@ -119,8 +126,9 @@ class MainApp(QWidget):
 
         self.photo = PhotoViewer(self)
         self.photo.setMinimumSize(640,480)
-        self.photo.setPhoto(QtGui.QPixmap('test_imgs/2.jpg'))
-        self.photo.setGeometry(self.initial_x, self.initial_y, self.initial_x + self.video_size.width(), self.initial_y + self.video_size.height())
+        # self.photo.setPhoto(QtGui.QPixmap('test_imgs/2.jpg'))
+        # self.photo._empty = False
+        # self.photo.setGeometry(self.initial_x, self.initial_y, self.initial_x + self.video_size.width(), self.initial_y + self.video_size.height())
 
         # initialize sharpen button
         # self.sharpen_button = QPushButton("Sharpen")
@@ -181,9 +189,10 @@ class MainApp(QWidget):
                        # self.frame.strides[0], self.QImage.Format_RGB888)
                        self.frame.strides[0], QImage.Format_Grayscale8)
         pixmap = QPixmap.fromImage(image).scaledToWidth(self.video_size.width())
-        self.image_label.setGeometry(self.initial_x, self.initial_y, self.initial_x + self.video_size.width(), self.initial_y + self.video_size.height())
-        self.image_label.setPixmap(pixmap)
-        self.photo._photo.setPixmap(pixmap)
+        # self.image_label.setGeometry(self.initial_x, self.initial_y, self.initial_x + self.video_size.width(), self.initial_y + self.video_size.height())
+        # self.image_label.setPixmap(pixmap)
+        # self.photo._photo.setPixmap(pixmap)
+        self.photo.setPhotoContinuous(pixmap)
 
 
     def resizeEvent(self, event):
