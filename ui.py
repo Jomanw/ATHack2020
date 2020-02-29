@@ -29,13 +29,16 @@ def create_slider(slider_name, min_value, max_value, release_fn):
 
 	return slider, grid_layout
 
-def create_toggle():
+def create_toggle(sharpen_fn, enhance_fn):
 	options = ['sharpen', 'enhance']
 	toggle_buttons = [QPushButton(option) for option in options]
 
 	box_layout = QHBoxLayout()
 	for toggle_button in toggle_buttons:
 		box_layout.addWidget(toggle_button)
+
+	toggle_buttons[0].clicked.connect(sharpen_fn)
+	toggle_buttons[1].clicked.connect(enhance_fn)
 
 	return toggle_buttons[0], toggle_buttons[1], box_layout
 

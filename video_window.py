@@ -48,7 +48,7 @@ class MainApp(QWidget):
         self.contrast_slider, self.contrast_layout = ui.create_slider('contrast', 33, 99, self.change_contrast)
         self.brightness_slider, self.brightness_layout = ui.create_slider('brightness', 1, 100, self.change_brightness)
 
-        self.sharpen_button, self.enhance_button, self.toggle_layout = ui.create_toggle()
+        self.sharpen_button, self.enhance_button, self.toggle_layout = ui.create_toggle(self.change_sharpen, self.change_enhance)
 
         # self.hover_button = ui.HoverButton('HOVER')
         # self.hover_button.setMinimumSize(10, 30)
@@ -72,7 +72,8 @@ class MainApp(QWidget):
 
         self.contrast = 1.0
         self.brightness = 1.0
-        self.enhance = True
+        self.sharpen = False
+        self.enhance = False
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.display_video_stream)
@@ -115,6 +116,12 @@ class MainApp(QWidget):
 
     def change_brightness(self):
         self.brightness = self.brightness_slider.value()
+
+    def change_sharpen(self):
+        self.sharpen = not self.sharpen
+
+    def change_enhance(self):
+        self.enhance = not self.enhance
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
