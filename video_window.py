@@ -48,15 +48,18 @@ class MainApp(QWidget):
         self.contrast_slider, self.contrast_layout = ui.create_slider('contrast', 33, 99, self.change_contrast)
         self.brightness_slider, self.brightness_layout = ui.create_slider('brightness', 1, 100, self.change_brightness)
 
-        self.hover_button = ui.HoverButton('HOVER')
-        self.hover_button.setMinimumSize(10, 30)
+        self.sharpen_button, self.enhance_button, self.toggle_layout = ui.create_toggle()
+
+        # self.hover_button = ui.HoverButton('HOVER')
+        # self.hover_button.setMinimumSize(10, 30)
 
         self.main_layout = QVBoxLayout()
-        self.main_layout.addWidget(self.hover_button)
+        # self.main_layout.addWidget(self.hover_button)
         self.main_layout.addWidget(self.image_label)
         self.main_layout.addWidget(self.quit_button)
         self.main_layout.addLayout(self.contrast_layout)
         self.main_layout.addLayout(self.brightness_layout)
+        self.main_layout.addLayout(self.toggle_layout)
 
         self.setLayout(self.main_layout)
 

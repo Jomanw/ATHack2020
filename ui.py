@@ -1,6 +1,6 @@
 from PySide2.QtGui import *
 from PySide2.QtCore import *
-from PySide2.QtWidgets import QWidget, QApplication, QLabel, QPushButton, QSlider, QGridLayout, QVBoxLayout
+from PySide2.QtWidgets import QWidget, QApplication, QLabel, QPushButton, QSlider, QHBoxLayout, QGridLayout, QVBoxLayout
 
 def create_slider(slider_name, min_value, max_value, release_fn):
 	grid_layout = QGridLayout()
@@ -29,7 +29,15 @@ def create_slider(slider_name, min_value, max_value, release_fn):
 
 	return slider, grid_layout
 
+def create_toggle():
+	options = ['sharpen', 'enhance']
+	toggle_buttons = [QPushButton(option) for option in options]
 
+	box_layout = QHBoxLayout()
+	for toggle_button in toggle_buttons:
+		box_layout.addWidget(toggle_button)
+
+	return toggle_buttons[0], toggle_buttons[1], box_layout
 
 class HoverButton(QPushButton):
 
