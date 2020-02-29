@@ -73,6 +73,7 @@ class PhotoViewer(QtWidgets.QGraphicsView):
                 factor = 0.9
                 self._zoom -= 1
             if self._zoom > 0:
+                # self._photo.setPixmap(self._photo.scaled(factor, factor, transformMode=QtCore.Qt.SmoothTransformation))
                 self.scale(factor, factor)
             elif self._zoom == 0:
                 self.fitInView()
@@ -158,7 +159,7 @@ class MainApp(QWidget):
     def setup_camera(self):
         """Initialize camera.
         """
-        self.capture = cv2.VideoCapture(0)
+        self.capture = cv2.VideoCapture(1)
         self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, self.video_size.width())
         self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, self.video_size.height())
 
