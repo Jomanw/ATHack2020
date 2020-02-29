@@ -45,8 +45,8 @@ class MainApp(QWidget):
         # self.sharpen_button = QPushButton("Sharpen")
         # self.sharpen_button.clicked.PIL_sharpen()
 
-        self.contrast_slider = ui.contrast_slider(33, 99, self.change_contrast)
-        self.brightness_slider = ui.contrast_slider(1, 100, self.change_brightness)
+        self.contrast_slider, self.contrast_layout = ui.create_slider('contrast', 33, 99, self.change_contrast)
+        self.brightness_slider, self.brightness_layout = ui.create_slider('brightness', 1, 100, self.change_brightness)
 
         self.hover_button = ui.HoverButton('HOVER')
         self.hover_button.setMinimumSize(10, 30)
@@ -55,8 +55,8 @@ class MainApp(QWidget):
         self.main_layout.addWidget(self.hover_button)
         self.main_layout.addWidget(self.image_label)
         self.main_layout.addWidget(self.quit_button)
-        self.main_layout.addWidget(self.contrast_slider)
-        self.main_layout.addWidget(self.brightness_slider)
+        self.main_layout.addLayout(self.contrast_layout)
+        self.main_layout.addLayout(self.brightness_layout)
 
         self.setLayout(self.main_layout)
 
