@@ -2,14 +2,86 @@ import sys
 
 from PySide2.QtGui import *
 from PySide2.QtCore import *
-from PySide2.QtWidgets import QWidget, QApplication, QLabel, QPushButton, QVBoxLayout, QSlider
-
+from PySide2.QtWidgets import QWidget, QApplication, QLabel, QPushButton, QVBoxLayout, QSlider, QScrollArea
+from PySide2 import QtWidgets, QtCore, QtGui
 import cv2
 import numpy as np
 
 import ui
 import processing as p
 from image_contrast import PIL_contrast
+class PhotoViewer(QtWidgets.QGraphicsView):
+    photoClicked = QtCore.Signal(QtCore.QPoint)
+
+    def __init__(self, parent):
+        super(PhotoViewer, self).__init__(parent)
+        self._zoom = 0
+        self._empty = True
+        self._scene = QtWidgets.QGraphicsScene(self)
+        self._photo = QtWidgets.QGraphicsPixmapItem()
+        self._scene.addItem(self._photo)
+        self.setScene(self._scene)
+        self.setTransformationAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
+        self.setResizeAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
+        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.setBackgroundBrush(QtGui.QBrush(QtGui.QColor(30, 30, 30)))
+        self.setFrameShape(QtWidgets.QFrame.NoFrame)
+
+    def hasPhoto(self):
+        return not self._empty
+
+    def fitInView(self, scale=True):
+        rect = QtCore.QRectF(self._photo.pixmap().rect())
+        if not rect.isNull():
+            self.setSceneRect(rect)
+            if self.hasPhoto():
+                unity = self.transform().mapRect(QtCore.QRectF(0, 0, 1, 1))
+                self.scale(1 / unity.width(), 1 / unity.height())
+                viewrect = self.viewport().rect()
+                scenerect = self.transform().mapRect(rect)
+                factor = min(viewrect.width() / scenerect.width(),
+                             viewrect.height() / scenerect.height())
+                self.scale(factor, factor)
+            self._zoom = 0
+
+    def setPhoto(self, pixmap=None):
+        self._zoom = 0
+        if pixmap and not pixmap.isNull():
+            self._empty = False
+            self.setDragMode(QtWidgets.QGraphicsView.ScrollHandDrag)
+            self._photo.setPixmap(pixmap)
+        else:
+            self._empty = True
+            self.setDragMode(QtWidgets.QGraphicsView.NoDrag)
+            self._photo.setPixmap(QtGui.QPixmap())
+        self.fitInView()
+
+    def wheelEvent(self, event):
+        if self.hasPhoto():
+            if event.angleDelta().y() > 0:
+                factor = 1.25
+                self._zoom += 1
+            else:
+                factor = 0.8
+                self._zoom -= 1
+            if self._zoom > 0:
+                self.scale(factor, factor)
+            elif self._zoom == 0:
+                self.fitInView()
+            else:
+                self._zoom = 0
+
+    def toggleDragMode(self):
+        if self.dragMode() == QtWidgets.QGraphicsView.ScrollHandDrag:
+            self.setDragMode(QtWidgets.QGraphicsView.NoDrag)
+        elif not self._photo.pixmap().isNull():
+            self.setDragMode(QtWidgets.QGraphicsView.ScrollHandDrag)
+
+    def mousePressEvent(self, event):
+        if self._photo.isUnderMouse():
+            self.photoClicked.emit(self.mapToScene(event.pos()).toPoint())
+        super(PhotoViewer, self).mousePressEvent(event)
 
 class MainApp(QWidget):
 
@@ -34,12 +106,21 @@ class MainApp(QWidget):
         self.image_label.setGeometry(self.initial_x, self.initial_y, self.initial_x + self.video_size.width(), self.initial_y + self.video_size.height())
         self.image_label.setMinimumSize(640,480)
 
+        self.scrolling_image_label = QScrollArea()
+        self.scrolling_image_label.setBackgroundRole(QPalette.Dark)
+        self.scrolling_image_label.setWidget(self.image_label)
+        # self.scrolling_image_label.setDragMode(True)
         self.img = cv2.imread('test_imgs/4.jpg')
 
         # initialize quit button
         self.quit_button = QPushButton("Quit")
         self.quit_button.setMinimumSize(10, 30)
         self.quit_button.clicked.connect(self.close)
+
+        self.photo = PhotoViewer(self)
+        self.photo.setMinimumSize(640,480)
+        self.photo.setPhoto(QtGui.QPixmap('test_imgs/2.jpg'))
+        self.photo.setGeometry(self.initial_x, self.initial_y, self.initial_x + self.video_size.width(), self.initial_y + self.video_size.height())
 
         # initialize sharpen button
         # self.sharpen_button = QPushButton("Sharpen")
@@ -53,7 +134,8 @@ class MainApp(QWidget):
 
         self.main_layout = QVBoxLayout()
         self.main_layout.addWidget(self.hover_button)
-        self.main_layout.addWidget(self.image_label)
+        # self.main_layout.addWidget(self.scrolling_image_label)
+        self.main_layout.addWidget(self.photo)
         self.main_layout.addWidget(self.quit_button)
         self.main_layout.addWidget(self.contrast_slider)
         self.main_layout.addWidget(self.brightness_slider)
@@ -85,8 +167,9 @@ class MainApp(QWidget):
                        # self.frame.strides[0], self.QImage.Format_RGB888)
                        self.frame.strides[0], QImage.Format_Grayscale8)
         pixmap = QPixmap.fromImage(image).scaledToWidth(self.video_size.width())
-        self.image_label.setGeometry(self.initial_x, self.initial_y, self.initial_x + self.video_size.width(), self.initial_y + self.video_size.height())
-        self.image_label.setPixmap(pixmap)
+        self.scrolling_image_label.setGeometry(self.initial_x, self.initial_y, self.initial_x + self.video_size.width(), self.initial_y + self.video_size.height())
+        self.scrolling_image_label.setPixmap(pixmap)
+        self.photo.setPhoto(pixmap)
 
     def display_video_stream(self):
         """Read frame from camera and repaint QLabel widget.
@@ -100,6 +183,8 @@ class MainApp(QWidget):
         pixmap = QPixmap.fromImage(image).scaledToWidth(self.video_size.width())
         self.image_label.setGeometry(self.initial_x, self.initial_y, self.initial_x + self.video_size.width(), self.initial_y + self.video_size.height())
         self.image_label.setPixmap(pixmap)
+        self.photo._photo.setPixmap(pixmap)
+
 
     def resizeEvent(self, event):
         # Resize the video_size based on the current window size
@@ -113,14 +198,13 @@ class MainApp(QWidget):
     def change_brightness(self):
         self.brightness = self.brightness_slider.value()
 
+    # def photoClicked(self, pos):
+    #     if self.photo.dragMode()  == QtWidgets.QGraphicsView.NoDrag:
+    #         self.editPixInfo.setText('%d, %d' % (pos.x(), pos.y()))
+
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     win = MainApp()
     win.show()
     sys.exit(app.exec_())
-
-
-
-
-
-
