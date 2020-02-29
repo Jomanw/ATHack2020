@@ -139,18 +139,15 @@ class MainApp(QWidget):
 
         self.sharpen_button, self.enhance_button, self.toggle_layout = ui.create_toggle(self.change_sharpen, self.change_enhance)
 
-        # self.hover_button = ui.HoverButton('HOVER')
-        # self.hover_button.setMinimumSize(10, 30)
+        self.hover_button = ui.HoverButton('HOVER')
+        self.hover_button.setMinimumSize(10, 30)
 
         self.main_layout = QVBoxLayout()
-<<<<<<< HEAD
         self.main_layout.addWidget(self.hover_button)
         # self.main_layout.addWidget(self.scrolling_image_label)
         self.main_layout.addWidget(self.photo)
-=======
         # self.main_layout.addWidget(self.hover_button)
-        self.main_layout.addWidget(self.image_label)
->>>>>>> edf670b3a5c08fdc1c54c314fc750f05f31636b1
+        # self.main_layout.addWidget(self.image_label)
         self.main_layout.addWidget(self.quit_button)
         self.main_layout.addLayout(self.contrast_layout)
         self.main_layout.addLayout(self.brightness_layout)
