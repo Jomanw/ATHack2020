@@ -134,19 +134,27 @@ class MainApp(QWidget):
         # self.sharpen_button = QPushButton("Sharpen")
         # self.sharpen_button.clicked.PIL_sharpen()
 
-        self.contrast_slider = ui.contrast_slider(33, 99, self.change_contrast)
-        self.brightness_slider = ui.contrast_slider(1, 100, self.change_brightness)
+        self.contrast_slider, self.contrast_layout = ui.create_slider('contrast', 33, 99, self.change_contrast)
+        self.brightness_slider, self.brightness_layout = ui.create_slider('brightness', 1, 100, self.change_brightness)
 
-        self.hover_button = ui.HoverButton('HOVER')
-        self.hover_button.setMinimumSize(10, 30)
+        self.sharpen_button, self.enhance_button, self.toggle_layout = ui.create_toggle(self.change_sharpen, self.change_enhance)
+
+        # self.hover_button = ui.HoverButton('HOVER')
+        # self.hover_button.setMinimumSize(10, 30)
 
         self.main_layout = QVBoxLayout()
+<<<<<<< HEAD
         self.main_layout.addWidget(self.hover_button)
         # self.main_layout.addWidget(self.scrolling_image_label)
         self.main_layout.addWidget(self.photo)
+=======
+        # self.main_layout.addWidget(self.hover_button)
+        self.main_layout.addWidget(self.image_label)
+>>>>>>> edf670b3a5c08fdc1c54c314fc750f05f31636b1
         self.main_layout.addWidget(self.quit_button)
-        self.main_layout.addWidget(self.contrast_slider)
-        self.main_layout.addWidget(self.brightness_slider)
+        self.main_layout.addLayout(self.contrast_layout)
+        self.main_layout.addLayout(self.brightness_layout)
+        self.main_layout.addLayout(self.toggle_layout)
 
         self.setLayout(self.main_layout)
 
@@ -159,7 +167,8 @@ class MainApp(QWidget):
 
         self.contrast = 1.0
         self.brightness = 1.0
-        self.enhance = True
+        self.sharpen = False
+        self.enhance = False
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.display_video_stream)
@@ -207,10 +216,11 @@ class MainApp(QWidget):
     def change_brightness(self):
         self.brightness = self.brightness_slider.value()
 
-    # def photoClicked(self, pos):
-    #     if self.photo.dragMode()  == QtWidgets.QGraphicsView.NoDrag:
-    #         self.editPixInfo.setText('%d, %d' % (pos.x(), pos.y()))
+    def change_sharpen(self):
+        self.sharpen = not self.sharpen
 
+    def change_enhance(self):
+        self.enhance = not self.enhance
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
