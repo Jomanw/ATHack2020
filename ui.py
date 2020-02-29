@@ -48,17 +48,20 @@ def create_toggle(sharpen_fn, enhance_fn, trace_fn, pause_fn):
 
 	return toggle_buttons[0], toggle_buttons[1], toggle_buttons[2], toggle_buttons[3], box_layout
 
-def create_quit_and_save(save_img_fn, quit_fn):
-	options = ['capture', 'quit']
-	toggle_buttons = [LegibleButton(option.upper()) for option in options]
+def create_save_and_quit(save_img_fn, save_video_fn, quit_fn):
+	options = ['capture', 'record', 'quit']
+	toggle_buttons = [LegibleButton(option.upper()) if option != 'record' 
+					  else RecordButton(option.upper()) 
+					  for option in options]
 
 	box_layout = QHBoxLayout()
 	for toggle_button in toggle_buttons:
 		box_layout.addWidget(toggle_button)
 
 	toggle_buttons[0].clicked.connect(save_img_fn)
-	toggle_buttons[1].clicked.connect(quit_fn)
-	toggle_buttons[1].setStyleSheet('color: white; background-color: red;')
+	toggle_buttons[1].clicked.connect(save_video_fn)
+	toggle_buttons[2].clicked.connect(quit_fn)
+	toggle_buttons[2].setStyleSheet('color: white; background-color: red;')
 
 	return toggle_buttons[0], toggle_buttons[1], box_layout
 
@@ -72,6 +75,38 @@ class LegibleButton(QPushButton):
 		
 		font = QFont("Arial", 20, QFont.Bold) 
 		self.setFont(font)
+
+class RecordButton(QPushButton):
+
+	def __init__(self, *args, **kwargs):
+		super().__init__(*args, **kwargs)
+
+		self.is_recording = False
+		self.high_alpha_color = 'background-color: rgba(248, 174, 33, 1.0);'
+		self.low_alpha_color = 'background-color: rgba(248, 174, 33, 0.5)'
+		self.active_color = self.high_alpha_color
+
+		self.setStyleSheet('color: white;' + self.active_color)
+		
+		font = QFont("Arial", 20, QFont.Bold) 
+		self.setFont(font)
+		self.timer = QTimer()
+		self.timer.timeout.connect(self.changeColor)
+
+	def mousePressEvent(self, event):
+		QPushButton.mousePressEvent(self,event)
+		self.is_recording = not self.is_recording
+		if self.is_recording:
+			self.timer.start(1000)
+		else:
+			self.timer.stop()
+
+	def changeColor(self):
+		if self.active_color == self.high_alpha_color:
+			self.active_color = self.low_alpha_color
+		else:
+			self.active_color = self.high_alpha_color
+		self.setStyleSheet(self.active_color)
 
 class ToggleButton(QPushButton):
 	

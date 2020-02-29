@@ -135,7 +135,7 @@ class MainApp(QWidget):
         # self.capture_button.setMinimumSize(10, 30)
         # self.capture_button.clicked.connect(self.capture_photo)
 
-        _, _, self.quit_and_save_layout = ui.create_quit_and_save(self.capture_photo, self.close)
+        _, _, self.quit_and_save_layout = ui.create_save_and_quit(self.capture_photo, self.capture_video, self.close)
 
         self.photo = PhotoViewer(self)
         self.photo.setMinimumSize(640,480)
@@ -220,6 +220,9 @@ class MainApp(QWidget):
         fname = QFileDialog.getSaveFileName(self, 'Save File As', "Captures/untitled.png", "Images (*.png *.jpg)")
         im.save(fname[0])
 
+    def capture_video(self):
+        pass
+
     def pause_stream(self):
         self.pause = not self.pause
 
@@ -245,6 +248,8 @@ class MainApp(QWidget):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    app.setWindowIcon(QIcon(QPixmap('proclear_logo.png')))
     win = MainApp()
+    win.setWindowTitle('ProClear')
     win.show()
     sys.exit(app.exec_())
