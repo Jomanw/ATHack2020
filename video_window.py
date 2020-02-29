@@ -2,14 +2,14 @@ import sys
 
 from PySide2.QtGui import *
 from PySide2.QtCore import *
-from PySide2.QtWidgets import QWidget, QApplication, QLabel, QPushButton, QVBoxLayout, QSlider
+from PySide2.QtWidgets import QWidget, QApplication, QLabel, QPushButton, QVBoxLayout, QSlider, QFileDialog
 
 import cv2
 import numpy as np
 
 import ui
 import processing as p
-from image_contrast import PIL_contrast
+from PIL import Image
 
 class MainApp(QWidget):
 
@@ -41,14 +41,15 @@ class MainApp(QWidget):
         self.quit_button.setMinimumSize(10, 30)
         self.quit_button.clicked.connect(self.close)
 
-        # initialize sharpen button
-        # self.sharpen_button = QPushButton("Sharpen")
-        # self.sharpen_button.clicked.PIL_sharpen()
+        # initialize capture button
+        self.capture_button = QPushButton("Capture")
+        self.capture_button.setMinimumSize(10, 30)
+        self.capture_button.clicked.connect(self.capture_photo)
 
         self.contrast_slider, self.contrast_layout = ui.create_slider('contrast', 33, 99, self.change_contrast)
         self.brightness_slider, self.brightness_layout = ui.create_slider('brightness', 1, 100, self.change_brightness)
 
-        self.sharpen_button, self.enhance_button, self.toggle_layout = ui.create_toggle(self.change_sharpen, self.change_enhance)
+        self.sharpen_button, self.enhance_button, self.trace_button, self.video_button, self.toggle_layout = ui.create_toggle(self.change_sharpen, self.change_enhance, self.change_trace, self.make_video)
 
         # self.hover_button = ui.HoverButton('HOVER')
         # self.hover_button.setMinimumSize(10, 30)
@@ -57,6 +58,7 @@ class MainApp(QWidget):
         # self.main_layout.addWidget(self.hover_button)
         self.main_layout.addWidget(self.image_label)
         self.main_layout.addWidget(self.quit_button)
+        self.main_layout.addWidget(self.capture_button)
         self.main_layout.addLayout(self.contrast_layout)
         self.main_layout.addLayout(self.brightness_layout)
         self.main_layout.addLayout(self.toggle_layout)
@@ -74,6 +76,7 @@ class MainApp(QWidget):
         self.brightness = 1.0
         self.sharpen = False
         self.enhance = False
+        self.trace = False
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.display_video_stream)
@@ -83,7 +86,7 @@ class MainApp(QWidget):
 
     def display_image_stream(self):
         # self.beta = (self.beta + 10) % 100
-        self.frame = p.process_contrast_frame(self.img, self.contrast, self.brightness, enhance=self.enhance)
+        self.frame = p.process_contrast_frame(self.img, self.contrast, self.brightness, enhance=self.enhance, sharpen=self.sharpen, trace=self.trace)
 
         image = QImage(self.frame, self.frame.shape[1], self.frame.shape[0],
                        # self.frame.strides[0], self.QImage.Format_RGB888)
@@ -96,7 +99,7 @@ class MainApp(QWidget):
         """Read frame from camera and repaint QLabel widget.
         """
         _, frame = self.capture.read()
-        self.frame = p.process_contrast_frame(frame, self.contrast, self.brightness, enhance=self.enhance)
+        self.frame = p.process_contrast_frame(frame, self.contrast, self.brightness, enhance=self.enhance, sharpen=self.sharpen, trace=self.trace)
 
         image = QImage(self.frame, self.frame.shape[1], self.frame.shape[0],
                        # self.frame.strides[0], self.QImage.Format_RGB888)
@@ -110,6 +113,14 @@ class MainApp(QWidget):
         # Don't set the size here directly, though
         self.video_size = QSize(self.frameGeometry().width() - 40, self.frameGeometry().height() - 96)
 
+    def capture_photo(self):
+        im = Image.fromarray(self.frame)
+        fname = QFileDialog.getSaveFileName(self, 'Save File As', "Captures/untitled.png", "Images (*.png *.jpg)")
+        im.save(fname[0])
+
+    def make_video(self):
+        pass
+
     def change_contrast(self):
         self.contrast = self.contrast_slider.value()
         self.contrast = self.contrast / 33.0 # keep range in 1.0-3.0
@@ -122,6 +133,10 @@ class MainApp(QWidget):
 
     def change_enhance(self):
         self.enhance = not self.enhance
+
+    def change_trace(self):
+        self.trace = not self.trace
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
