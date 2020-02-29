@@ -20,7 +20,7 @@ def process_frame(image):
 
 def process_threshold_frame(image):
     image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    ret, thresh = cv2.threshold(image ,200, 255, cv2.THRESH_TOZERO_INV)
+    ret, thresh = cv2.threshold(image,125, 255, cv2.THRESH_TOZERO_INV)
     return thresh
 
 def process_filter_frame(image):
@@ -29,11 +29,12 @@ def process_filter_frame(image):
     image = cv2.filter2D(image, -1, kernel)
     return image
 
-def process_contrast_frame(image, alpha, beta):
+def process_contrast_frame(image, alpha, beta, enhance=True):
     # alpha = 1.0 # Contrast control (1.0-3.0)
     # beta = 0 # Brightness control (0-100)
     adjusted = cv2.convertScaleAbs(image, alpha=alpha, beta=beta)
     adjusted = cv2.cvtColor(adjusted, cv2.COLOR_BGR2GRAY)
-    # adjusted = cv2.equalizeHist(adjusted)
+    if enhance:
+        adjusted = cv2.equalizeHist(adjusted)
 
     return adjusted
