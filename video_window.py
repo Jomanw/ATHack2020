@@ -100,8 +100,6 @@ class MainApp(QWidget):
         self.initial_x = 100
         self.initial_y = 100
         self.video_size = QSize(640, 480)
-        # self.video_size = QSize(1024.0, 768.0)
-        # self.video_size = QSize(1280, 1024)
 
         self.scale = 1.0
         self.pause = False
@@ -117,26 +115,13 @@ class MainApp(QWidget):
         self.image_label = QLabel()
         self.image_label.setGeometry(self.initial_x, self.initial_y, self.initial_x + self.video_size.width(), self.initial_y + self.video_size.height())
         self.image_label.setMinimumSize(640,480)
-        # self.image_label.setMinimumSize(1024,768)
-        # self.image_label.setMinimumSize(1280, 1024)
 
         self.scrolling_image_label = QScrollArea()
         self.scrolling_image_label.setBackgroundRole(QPalette.Dark)
         self.scrolling_image_label.setWidget(self.image_label)
-        # self.scrolling_image_label.setDragMode(True)
         self.img = cv2.imread('test_imgs/4.jpg')
 
-        # initialize quit button
-        # self.quit_button = ui.LegibleButton("Quit")
-        # self.quit_button.setMinimumSize(10, 30)
-        # self.quit_button.clicked.connect(self.close)
-
-        # # initialize capture button
-        # self.capture_button = ui.LegibleButton("Capture")
-        # self.capture_button.setMinimumSize(10, 30)
-        # self.capture_button.clicked.connect(self.capture_photo)
-
-        _, _, self.quit_and_save_layout = ui.create_save_and_quit(self.capture_photo, self.capture_video, self.close)
+        _, self.save_video_button, _, self.quit_and_save_layout = ui.create_save_and_quit(self.capture_photo, self.capture_video, self.close)
 
         self.photo = PhotoViewer(self)
         self.photo.setMinimumSize(640,480)
@@ -148,11 +133,7 @@ class MainApp(QWidget):
         self.sharpen_button, self.enhance_button, self.trace_button, self.pause_button, self.toggle_layout = ui.create_toggle(self.change_sharpen, self.change_enhance, self.change_trace, self.pause_stream)
 
         self.main_layout = QVBoxLayout()
-        # self.main_layout.addWidget(self.scrolling_image_label)
         self.main_layout.addWidget(self.photo)
-        # self.main_layout.addWidget(self.image_label)
-        # self.main_layout.addWidget(self.quit_button)
-        # self.main_layout.addWidget(self.capture_button)
         self.main_layout.addLayout(self.quit_and_save_layout)
         self.main_layout.addLayout(self.contrast_layout)
         self.main_layout.addLayout(self.brightness_layout)
@@ -164,7 +145,7 @@ class MainApp(QWidget):
     def setup_camera(self):
         """Initialize camera.
         """
-        self.capture = cv2.VideoCapture(1)
+        self.capture = cv2.VideoCapture(0)
         self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, self.video_size.width())
         self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, self.video_size.height())
 
@@ -196,11 +177,13 @@ class MainApp(QWidget):
     def display_video_stream(self):
         """Read frame from camera and repaint QLabel widget.
         """
-        if self.pause == False:
+        if not self.pause:
             _, self.raw_img = self.capture.read()
         
         self.frame = p.process_contrast_frame(self.raw_img, self.contrast, self.brightness, self.trace_threshold, enhance=self.enhance, sharpen=self.sharpen, trace=self.trace)
-        
+        if self.save_video_button.is_recording:
+            self.save_video_button.write_img(self.frame)
+
         image = QImage(self.frame, self.frame.shape[1], self.frame.shape[0],
                        # self.frame.strides[0], self.QImage.Format_RGB888)
                        self.frame.strides[0], QImage.Format_Grayscale8)
@@ -222,7 +205,7 @@ class MainApp(QWidget):
         im.save(fname[0])
 
     def capture_video(self):
-        pass
+        pass # empty function
 
     def pause_stream(self):
         self.pause = not self.pause

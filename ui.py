@@ -1,3 +1,5 @@
+import cv2
+
 from PySide2.QtGui import *
 from PySide2.QtCore import *
 from PySide2.QtWidgets import QWidget, QApplication, QLabel, QPushButton, QSlider, QHBoxLayout, QGridLayout, QVBoxLayout
@@ -63,7 +65,7 @@ def create_save_and_quit(save_img_fn, save_video_fn, quit_fn):
 	toggle_buttons[2].clicked.connect(quit_fn)
 	toggle_buttons[2].setStyleSheet('color: white; background-color: red;')
 
-	return toggle_buttons[0], toggle_buttons[1], box_layout
+	return toggle_buttons[0], toggle_buttons[1], toggle_buttons[2], box_layout
 
 class LegibleButton(QPushButton):
 	
@@ -76,6 +78,10 @@ class LegibleButton(QPushButton):
 		font = QFont("Arial", 20, QFont.Bold) 
 		self.setFont(font)
 
+# frame_width = 1280
+# frame_height = 720
+# dims = (frame_width, frame_height)
+dims = (640, 480)
 class RecordButton(QPushButton):
 
 	def __init__(self, *args, **kwargs):
@@ -90,6 +96,7 @@ class RecordButton(QPushButton):
 		
 		font = QFont("Arial", 20, QFont.Bold) 
 		self.setFont(font)
+		self.out = None
 		self.timer = QTimer()
 		self.timer.timeout.connect(self.changeColor)
 
@@ -97,9 +104,14 @@ class RecordButton(QPushButton):
 		QPushButton.mousePressEvent(self,event)
 		self.is_recording = not self.is_recording
 		if self.is_recording:
+			self.active_color = self.low_alpha_color
 			self.timer.start(1000)
+			self.out = cv2.VideoWriter('out.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 30, dims, 0)
 		else:
+			self.active_color = self.high_alpha_color
 			self.timer.stop()
+			self.out.release()
+		self.setStyleSheet(self.active_color)
 
 	def changeColor(self):
 		if self.active_color == self.high_alpha_color:
@@ -107,6 +119,11 @@ class RecordButton(QPushButton):
 		else:
 			self.active_color = self.high_alpha_color
 		self.setStyleSheet(self.active_color)
+
+	def write_img(self, frame):
+		if self.out is None:
+			return
+		self.out.write(frame)
 
 class ToggleButton(QPushButton):
 	
